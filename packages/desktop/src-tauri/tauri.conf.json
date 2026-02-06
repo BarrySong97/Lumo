@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "JournalTodo",
+  "version": "0.1.11",
+  "identifier": "com.lumo.app",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @lumo/web dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm --filter @lumo/web build && pnpm --filter @lumo/server build && node -e \"const fs=require('fs');const path=require('path');const src=path.join(process.cwd(),'../../../apps/server/dist/server');const dest=path.join(process.cwd(),'binaries/lumo-server');fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);fs.chmodSync(dest,0o755);\"",
+    "frontendDist": "../../../apps/web/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Journal Todo",
+        "width": 402,
+        "height": 800,
+        "minWidth": 362,
+        "minHeight": 582,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "migrations/"
+    ],
+    "externalBin": [
+      "binaries/lumo-server"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFGMzcyQUM0QjQ4NjU0ODYKUldTR1ZJYTB4Q28zcjFnRVdscGhMa0ZMRC9nZ1ZITFcwRS9MWks3bkd5bERlVURMU1lQSVJGR24K",
+      "endpoints": [
+        "https://github.com/BarrySong97/journal_todo/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

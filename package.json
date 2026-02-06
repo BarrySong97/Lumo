@@ -1,0 +1,34 @@
+{
+  "name": "lumo",
+  "private": true,
+  "version": "0.1.11",
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev --filter=@lumo/web --filter=@lumo/server",
+    "dev:desktop": "turbo dev:tauri --filter=@lumo/desktop",
+    "dev:server": "pnpm -C apps/server dev",
+    "dev:website": "pnpm -C packages/website dev",
+    "build": "turbo build --filter=@lumo/server --filter=@lumo/web --filter=@lumo/desktop",
+    "build:server": "pnpm -C apps/server build",
+    "build:web": "turbo build --filter=@lumo/web",
+    "build:desktop": "turbo build --filter=@lumo/desktop",
+    "build:website": "turbo build --filter=@lumo/website",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "icon": "pnpm -C packages/desktop tauri icon src-tauri/icons/icon.png"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^4.0.18",
+    "agentation": "^1.3.2",
+    "jsdom": "^27.4.0",
+    "turbo": "^2.5.4",
+    "typescript": "~5.8.3",
+    "vitest": "^4.0.18"
+  },
+  "packageManager": "pnpm@10.12.1",
+  "dependencies": {
+    "@tabler/icons-react": "^3.36.1"
+  }
+}
