@@ -1,1 +1,7 @@
-// This file has been removed as part of the refactor
+import { defineConfig } from "drizzle-kit"
+
+export default defineConfig({
+  schema: "./src/schema",
+  out: "./drizzle",
+  dialect: "sqlite",
+})

@@ -1,1 +1,0 @@
-ALTER TABLE `todos` ADD `parent_id` text;

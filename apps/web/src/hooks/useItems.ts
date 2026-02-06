@@ -1,80 +1,41 @@
-import { useState, useEffect, useCallback } from "react"
-import { client, type Item, type CreateItem, type UpdateItem } from "@lumo/api"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { CreateItemInput, UpdateItemInput } from "@lumo/api"
+import { orpc } from "@/utils/orpc"
 
 export function useItems() {
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const refresh = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await client.item.list()
-      setItems(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load items")
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const listQuery = useQuery(orpc.item.list.queryOptions())
 
-  useEffect(() => {
-    refresh()
-  }, [refresh])
-
-  const createItem = useCallback(
-    async (data: CreateItem) => {
-      try {
-        setError(null)
-        await client.item.create(data)
-        await refresh()
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to create item"
-        setError(message)
-        throw new Error(message)
-      }
+  const createMutation = useMutation({
+    mutationFn: (data: CreateItemInput) => orpc.item.create.call(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orpc.item.list.queryKey() })
     },
-    [refresh]
-  )
+  })
 
-  const updateItem = useCallback(
-    async (id: number, data: UpdateItem) => {
-      try {
-        setError(null)
-        await client.item.update({ id, ...data })
-        await refresh()
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to update item"
-        setError(message)
-        throw new Error(message)
-      }
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdateItemInput) => orpc.item.update.call(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orpc.item.list.queryKey() })
     },
-    [refresh]
-  )
+  })
 
-  const deleteItem = useCallback(
-    async (id: number) => {
-      try {
-        setError(null)
-        await client.item.delete({ id })
-        await refresh()
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to delete item"
-        setError(message)
-        throw new Error(message)
-      }
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => orpc.item.delete.call({ id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orpc.item.list.queryKey() })
     },
-    [refresh]
-  )
+  })
 
   return {
-    items,
-    loading,
-    error,
-    createItem,
-    updateItem,
-    deleteItem,
-    refresh,
+    items: listQuery.data ?? [],
+    loading: listQuery.isLoading,
+    error: listQuery.error?.message ?? null,
+    createItem: createMutation.mutateAsync,
+    updateItem: (id: number, data: Omit<UpdateItemInput, "id">) =>
+      updateMutation.mutateAsync({ id, ...data }),
+    deleteItem: deleteMutation.mutateAsync,
+    refresh: () => queryClient.invalidateQueries({ queryKey: orpc.item.list.queryKey() }),
   }
 }

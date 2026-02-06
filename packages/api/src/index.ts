@@ -1,8 +1,8 @@
-/**
- * @lumo/api - Shared API types and client
- * Exports oRPC router, schemas, and client for use in server and web app
- */
-
-export * from "./schema"
-export * from "./router"
+export * from "./schemas/item"
+export * from "./schemas/health-check"
+export * from "./types/item"
+export * from "./types/health-check"
+export * from "./errors/common"
+export * from "./routers/index"
+export * from "./context"
 export * from "./client"

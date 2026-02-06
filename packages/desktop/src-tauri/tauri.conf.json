@@ -1,18 +1,17 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "JournalTodo",
+  "productName": "Lumo",
   "version": "0.1.11",
   "identifier": "com.lumo.app",
   "build": {
-    "beforeDevCommand": "pnpm --filter @lumo/web dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm --filter @lumo/web build && pnpm --filter @lumo/server build && node -e \"const fs=require('fs');const path=require('path');const src=path.join(process.cwd(),'../../../apps/server/dist/server');const dest=path.join(process.cwd(),'binaries/lumo-server');fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);fs.chmodSync(dest,0o755);\"",
+    "beforeBuildCommand": "pnpm -C ../../apps/web build && pnpm -C ../../apps/server build && node ./src-tauri/scripts/prepare-sidecar.mjs",
     "frontendDist": "../../../apps/web/dist"
   },
   "app": {
     "windows": [
       {
-        "title": "Journal Todo",
+        "title": "Lumo",
         "width": 402,
         "height": 800,
         "minWidth": 362,
@@ -35,9 +34,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "migrations/"
-    ],
+    "resources": [],
     "externalBin": [
       "binaries/lumo-server"
     ]

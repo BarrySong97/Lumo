@@ -1,134 +1,91 @@
 import { Hono } from "hono"
+import { cors } from "hono/cors"
+import { onError } from "@orpc/server"
 import { RPCHandler } from "@orpc/server/fetch"
-import { z } from "zod"
-import { createProcedure, createRouter } from "@orpc/server"
-import { initDb, db } from "./db"
+import { createContext } from "@lumo/api/context"
+import { itemRouter } from "@lumo/api/routers/index"
+import { createDatabase } from "@lumo/db"
+import { join } from "path"
+import { homedir } from "os"
 
-// Initialize database
-initDb()
+function getDefaultDbPath(): string {
+  const platform = process.platform
+  const home = homedir()
 
-// Define Item schema
-const ItemSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  description: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-})
+  if (platform === "win32") {
+    return join(process.env.APPDATA || join(home, "AppData", "Roaming"), "Lumo", "lumo.db")
+  } else if (platform === "darwin") {
+    return join(home, "Library", "Application Support", "Lumo", "lumo.db")
+  } else {
+    return join(process.env.XDG_DATA_HOME || join(home, ".local", "share"), "Lumo", "lumo.db")
+  }
+}
 
-const CreateItemSchema = z.object({
-  name: z.string().min(1).max(255),
-  description: z.string().max(1000).optional(),
-})
+function getDbPath(): string {
+  if (process.env.LUMO_DB_PATH) {
+    return process.env.LUMO_DB_PATH
+  }
 
-const UpdateItemSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  description: z.string().max(1000).optional(),
-})
+  if (process.env.NODE_ENV === "development" || !process.env.NODE_ENV) {
+    return "./lumo.db"
+  }
 
-// Define inline router with CRUD procedures
-const router = createRouter({
-  item: createRouter({
-    list: createProcedure()
-      .outputs(z.array(ItemSchema))
-      .handler(async () => {
-        const stmt = db.prepare("SELECT * FROM Item ORDER BY createdAt DESC")
-        return stmt.all() as z.infer<typeof ItemSchema>[]
-      }),
+  return getDefaultDbPath()
+}
 
-    get: createProcedure()
-      .inputs(z.number())
-      .outputs(ItemSchema)
-      .handler(async (id) => {
-        const stmt = db.prepare("SELECT * FROM Item WHERE id = ?")
-        const item = stmt.get(id) as z.infer<typeof ItemSchema> | undefined
-        if (!item) {
-          throw new Error(`Item with id ${id} not found`)
-        }
-        return item
-      }),
+const dbPath = getDbPath()
+const db = createDatabase({ path: dbPath })
 
-    create: createProcedure()
-      .inputs(CreateItemSchema)
-      .outputs(ItemSchema)
-      .handler(async (input) => {
-        const stmt = db.prepare(
-          "INSERT INTO Item (name, description, createdAt, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-        )
-        const result = stmt.run(input.name, input.description || "")
-        const id = result.lastInsertRowid as number
-        const getStmt = db.prepare("SELECT * FROM Item WHERE id = ?")
-        return getStmt.get(id) as z.infer<typeof ItemSchema>
-      }),
+function getAllowedOrigins(): Set<string> {
+  const configured = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
 
-    update: createProcedure()
-      .inputs(z.object({ id: z.number(), data: UpdateItemSchema }))
-      .outputs(ItemSchema)
-      .handler(async ({ id, data }) => {
-        const getStmt = db.prepare("SELECT * FROM Item WHERE id = ?")
-        const existing = getStmt.get(id) as z.infer<typeof ItemSchema> | undefined
-        if (!existing) {
-          throw new Error(`Item with id ${id} not found`)
-        }
+  const defaults = [
+    "http://localhost:1420",
+    "http://127.0.0.1:1420",
+    "tauri://localhost",
+    "http://tauri.localhost",
+  ]
 
-        const name = data.name ?? existing.name
-        const description = data.description ?? existing.description
+  return new Set([...defaults, ...configured])
+}
 
-        const updateStmt = db.prepare(
-          "UPDATE Item SET name = ?, description = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?"
-        )
-        updateStmt.run(name, description, id)
+const allowedOrigins = getAllowedOrigins()
 
-        const updated = getStmt.get(id) as z.infer<typeof ItemSchema>
-        return updated
-      }),
-
-    delete: createProcedure()
-      .inputs(z.number())
-      .outputs(z.object({ success: z.boolean() }))
-      .handler(async (id) => {
-        const getStmt = db.prepare("SELECT * FROM Item WHERE id = ?")
-        const existing = getStmt.get(id)
-        if (!existing) {
-          throw new Error(`Item with id ${id} not found`)
-        }
-
-        const deleteStmt = db.prepare("DELETE FROM Item WHERE id = ?")
-        deleteStmt.run(id)
-        return { success: true }
-      }),
-  }),
+const rpcHandler = new RPCHandler(itemRouter, {
+  interceptors: [
+    onError((error) => {
+      console.error("[RPC Error]", error)
+    }),
+  ],
 })
 
 const app = new Hono()
 
-// Health check endpoint
+app.use("/*", cors({
+  origin: (origin) => {
+    if (!origin) {
+      return "http://localhost:1420"
+    }
+    return allowedOrigins.has(origin) ? origin : "http://localhost:1420"
+  },
+  credentials: true,
+  allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type"],
+}))
+
 app.get("/health", (c) => {
   return c.json({ status: "ok" })
 })
 
-// Create RPC handler with error interceptor
-const rpcHandler = new RPCHandler({
-  router,
-  onError: (error) => {
-    console.error("RPC Error:", error)
-  },
-})
-
-// Wire RPC handler to /rpc prefix
-app.all("/rpc/*", async (c) => {
-  const path = c.req.path.replace("/rpc", "")
-  const request = new Request(
-    new URL(path, `http://localhost:${process.env.PORT || 3001}`),
-    {
-      method: c.req.method,
-      headers: c.req.raw.headers,
-      body: c.req.method !== "GET" ? await c.req.text() : undefined,
-    }
-  )
-
-  const response = await rpcHandler.fetch(request)
-  return response
+app.all("/rpc*", async (c) => {
+  const { response } = await rpcHandler.handle(c.req.raw, {
+    prefix: "/rpc",
+    context: createContext({ db }),
+  })
+  return response ?? c.json({ error: "Not Found" }, 404)
 })
 
 const port = parseInt(process.env.PORT || "3001")
@@ -139,4 +96,5 @@ export default {
 }
 
 console.log(`Server running on http://localhost:${port}`)
-
+console.log(`Database path: ${dbPath}`)
+console.log(`Environment: ${process.env.NODE_ENV || "development"}`)

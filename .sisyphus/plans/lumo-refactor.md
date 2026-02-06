@@ -205,7 +205,7 @@ Wave 4 (After Wave 3):
 
 ---
 
-- [ ] 2. Create apps/server skeleton with Hono + oRPC
+- [x] 2. Create apps/server skeleton with Hono + oRPC
 
   **What to do**:
   - Create `apps/server/` directory
@@ -270,7 +270,7 @@ Wave 4 (After Wave 3):
 
 ---
 
-- [ ] 3. Create packages/api with oRPC router and Item schema
+- [x] 3. Create packages/api with oRPC router and Item schema
 
   **What to do**:
   - Clear existing packages/api content
@@ -445,7 +445,7 @@ Wave 4 (After Wave 3):
 
 ---
 
-- [ ] 6. Simplify apps/web to Item CRUD UI
+- [x] 6. Simplify apps/web to Item CRUD UI
 
   **What to do**:
   - Delete `apps/web/src/components/journal/` directory entirely
@@ -521,7 +521,7 @@ Wave 4 (After Wave 3):
 
 ---
 
-- [ ] 7. Configure Tauri sidecar for server binary
+- [x] 7. Configure Tauri sidecar for server binary
 
   **What to do**:
   - Update `packages/desktop/src-tauri/tauri.conf.json`:
@@ -582,7 +582,7 @@ Wave 4 (After Wave 3):
 
 ---
 
-- [ ] 8. Update turbo.json and root package.json
+- [x] 8. Update turbo.json and root package.json
 
   **What to do**:
   - Update `turbo.json`:
@@ -645,7 +645,7 @@ Wave 4 (After Wave 3):
 
 ---
 
-- [ ] 9. Final integration and cleanup
+- [x] 9. Final integration and cleanup
 
   **What to do**:
   - Run `pnpm install` to ensure all dependencies resolve

@@ -3,6 +3,7 @@ import { type Item } from "@lumo/api"
 import { Toaster } from "@lumo/ui"
 import { ItemList } from "@/components/ItemList"
 import { ItemForm } from "@/components/ItemForm"
+import { Titlebar } from "@/components/Titlebar"
 import { useItems } from "@/hooks/useItems"
 
 export function App() {
@@ -25,14 +26,15 @@ export function App() {
   }
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this item?")) {
       await deleteItem(id)
-    }
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Titlebar />
+
+      <div className="flex-1 p-8">
+        <div className="max-w-4xl mx-auto space-y-8">
         <header>
           <h1 className="text-4xl font-bold">Items</h1>
           <p className="text-muted-foreground mt-2">Manage your items</p>
@@ -63,6 +65,7 @@ export function App() {
             onDelete={handleDelete}
           />
         </section>
+        </div>
       </div>
 
       <Toaster />

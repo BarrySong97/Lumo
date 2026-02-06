@@ -11,16 +11,16 @@ static LOG_PATH: Mutex<Option<PathBuf>> = Mutex::new(None);
 fn get_fallback_log_dir() -> PathBuf {
     // Try multiple fallback locations
     if let Ok(home) = std::env::var("USERPROFILE") {
-        return PathBuf::from(home).join(".journal-todo");
+        return PathBuf::from(home).join(".lumo");
     }
     if let Ok(home) = std::env::var("HOME") {
-        return PathBuf::from(home).join(".journal-todo");
+        return PathBuf::from(home).join(".lumo");
     }
     if let Ok(temp) = std::env::var("TEMP") {
-        return PathBuf::from(temp).join("journal-todo");
+        return PathBuf::from(temp).join("lumo");
     }
     if let Ok(tmp) = std::env::var("TMP") {
-        return PathBuf::from(tmp).join("journal-todo");
+        return PathBuf::from(tmp).join("lumo");
     }
     // Last resort: current directory
     PathBuf::from(".")
@@ -41,7 +41,7 @@ pub fn init(log_dir: Option<&PathBuf>) -> PathBuf {
         let _ = std::fs::create_dir_all(&fallback);
     }
 
-    let log_path = dir.join("journal-todo.log");
+    let log_path = dir.join("lumo.log");
 
     // Open log file in append mode
     match OpenOptions::new().create(true).append(true).open(&log_path) {
@@ -55,7 +55,7 @@ pub fn init(log_dir: Option<&PathBuf>) -> PathBuf {
         Err(e) => {
             eprintln!("Warning: Failed to open log file {:?}: {}", log_path, e);
             // Try fallback location
-            let fallback_path = get_fallback_log_dir().join("journal-todo.log");
+            let fallback_path = get_fallback_log_dir().join("lumo.log");
             if let Ok(file) = OpenOptions::new()
                 .create(true)
                 .append(true)

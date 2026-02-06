@@ -1,4 +1,4 @@
-# Agent Instructions (journal-todo)
+# Agent Instructions (lumo)
 
 This file is for automated coding agents working in this repository.
 Follow existing conventions first; do not invent new tooling or styles.
