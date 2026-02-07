@@ -1,124 +1,161 @@
-# Agent Instructions (lumo)
+# AGENTS.md
 
-This file is for automated coding agents working in this repository.
-Follow existing conventions first; do not invent new tooling or styles.
+Guidance for agentic coding assistants working in this repository.
 
-## Repository layout
+## Scope and Repo Shape
 
-- `packages/web`: Vite + React app (UI)
-- `packages/desktop`: Tauri desktop wrapper
-- `packages/desktop/src-tauri`: Rust backend for Tauri
-- `packages/shared`: Shared TS utilities and types
+- Monorepo managed by `pnpm` workspaces + Turbo.
+- Workspace roots:
+  - `apps/server` (Bun + Hono server)
+  - `apps/web` (Vite + React app)
+  - `apps/website` (Next.js marketing website)
+  - `packages/api` (oRPC contracts/routers)
+  - `packages/db` (Drizzle + Bun SQLite)
+  - `packages/ui` (shared React UI components)
+  - `packages/shared` (shared types/utils)
+  - `packages/desktop` (Tauri wrapper)
 
-## Package manager and workspace
+## Package Manager and Runtime
 
-- Workspace is managed with `pnpm` and `turbo`.
-- Root `package.json` scripts drive most tasks.
-- You can scope to a package using `pnpm -C <path> ...`.
+- Package manager: `pnpm@10.12.1`.
+- Node is used across the repo; Bun is required for server runtime/build commands.
+- Rust/Tauri toolchain is required for desktop builds.
 
-## Build, lint, and test commands
+## Primary Commands (Run From Repo Root)
 
-Run from repo root unless noted.
+### Develop
 
-- Install deps: `pnpm install`
-- Dev (web): `pnpm dev`
-- Dev (desktop/tauri): `pnpm dev:desktop`
-- Build all: `pnpm build`
-- Build web only: `pnpm build:web`
-- Build desktop only: `pnpm build:desktop`
-- Lint (turbo): `pnpm lint`
-- Typecheck (turbo): `pnpm typecheck`
+- `pnpm dev` - run Turbo dev graph.
+- `pnpm dev:server` - run only server dev process.
+- `pnpm dev:website` - run Next.js website dev server.
+- `pnpm dev:desktop` - run Tauri desktop dev flow.
 
-Notes:
-- `turbo` tasks are defined in `turbo.json`.
-- `packages/web` has `eslint.config.js` but no `lint` script is
-  currently defined in package scripts. If `pnpm lint` fails because
-  no package exposes a lint task, add one rather than inventing flags.
+### Build
 
-### Single-test guidance
+- `pnpm build` - build server + web + desktop.
+- `pnpm build:server` - build server binary (`apps/server/dist/server`).
+- `pnpm build:web` - build Vite web app.
+- `pnpm build:website` - build Next.js website.
+- `pnpm build:desktop` - build Tauri desktop app.
 
-There is no JavaScript test runner configured in this repo yet.
-If/when tests are added, prefer a single-test flag in that runner.
+### Lint
 
-- Vitest: `pnpm -C packages/web vitest -t "test name"`
-- Jest: `pnpm -C packages/web jest -t "test name"`
+- `pnpm lint` - Turbo lint task (currently most relevant in `apps/website` and `apps/web`).
+- `pnpm -C apps/website lint` - lint Next.js app directly.
 
-Rust (Tauri) tests, if added:
+### Type Check
 
-- `cd packages/desktop/src-tauri && cargo test`
-- Single test: `cargo test test_name`
+- `pnpm typecheck` - Turbo typecheck across workspaces.
+- `pnpm -C apps/web typecheck`
+- `pnpm -C apps/server typecheck`
+- `pnpm -C apps/website typecheck`
 
-## TypeScript and React conventions
+### Test
 
-- TypeScript is strict. See `packages/web/tsconfig*.json` and
-  `packages/shared/tsconfig.json` for exact flags.
-- No unused locals/parameters and no fallthrough switches.
-- ESM modules (`"type": "module"`). Use `import`/`export`.
-- React components are function components with hooks.
+- `pnpm test` - run root Vitest (`passWithNoTests: true`).
+- `pnpm test:ui` - run Vitest UI.
+- `pnpm exec vitest run` - explicit non-watch test run.
 
-### Imports
+## Running a Single Test (Important)
 
-- Use the `@/*` alias in `packages/web` for app code (see
-  `packages/web/tsconfig.json`).
-- Prefer absolute alias imports over deep relative paths in web.
-- Keep imports grouped: external deps, workspace deps, app aliases,
-  then relative paths.
+No committed test files currently exist, but Vitest is configured. Use these patterns when adding/running tests:
 
-### Formatting
+- Run one test file (root config):
+  - `pnpm exec vitest run path/to/file.test.ts`
+- Run one test file in web app with web config:
+  - `pnpm exec vitest run --config apps/web/vitest.config.ts apps/web/src/path/to/file.test.tsx`
+- Run tests matching a name:
+  - `pnpm exec vitest run -t "test name"`
+- Combine file + name filter:
+  - `pnpm exec vitest run apps/web/src/path/to/file.test.tsx -t "renders item"`
+- Watch a single file while developing:
+  - `pnpm exec vitest --config apps/web/vitest.config.ts apps/web/src/path/to/file.test.tsx`
 
-- No Prettier or Biome config is present. Preserve existing style.
-- Current code uses double quotes and minimal semicolons.
-- Do not apply aggressive reformatting.
+## Code Style and Conventions
 
-### Naming
+## UI Component Installation Policy
 
-- Components: `PascalCase` (e.g., `JournalApp`).
-- Functions/variables: `camelCase`.
-- Files: follow existing casing in the folder you touch.
+- All UI component extraction/installation (shadcn/ui, AI Elements, and related UI generators) must be performed in `packages/ui`.
+- `components.json` must live in `packages/ui/components.json`.
+- Do not add or keep app-local `components.json` files under `apps/*`.
+- Apps should consume shared UI components via `@lumo/ui` exports instead of generating duplicate UI components locally.
 
-### Error handling
+### Language and Typing
 
-- Do not swallow errors. Log or surface failures meaningfully.
-- Clean up side effects (event listeners, timers) in React effects.
-- Prefer early returns over deeply nested branches.
+- TypeScript-first repository with `strict: true` broadly enabled.
+- Prefer explicit domain types and schema-derived types over `any`.
+- Use `import type` for type-only imports.
+- Keep API contracts and validation schemas aligned (`packages/api/src/contracts` + `packages/api/src/schemas`).
+- Favor narrow return types for exported helpers when useful.
 
-## Tailwind and styling
+### Imports and Module Structure
 
-- `packages/web` uses Tailwind. Keep class lists readable.
-- Prefer the `cn` helper (`packages/web/src/lib/utils.ts`) for
-  className composition.
+- Import order pattern used across repo:
+  1) external packages,
+  2) workspace/internal aliases,
+  3) relative imports.
+- Keep a blank line between logical import groups.
+- Use path aliases where configured:
+  - `@/*` in `apps/web`
+  - `@/*` in `apps/website`
+- In shared packages, export from `src/index.ts` and keep public surface deliberate.
 
-## Tauri notes
+### Formatting and File-Level Consistency
 
-- Desktop app uses Tauri v2 (`packages/desktop`).
-- Rust code lives under `packages/desktop/src-tauri`.
-- Avoid changing Rust build configuration unless necessary.
+- No single global formatter config is enforced at root.
+- Follow the existing style of the file you edit:
+  - `apps/web`, `apps/server`, `packages/api`, `packages/db`, `packages/ui`:
+    - double quotes
+    - semicolons often omitted
+  - `apps/website` and parts of `packages/shared`:
+    - double quotes
+    - semicolons commonly present
+- Do not perform broad formatting-only rewrites unless explicitly requested.
+- Keep diffs tight and focused on behavior.
 
-## Linting configuration
+### Naming Conventions
 
-- ESLint flat config lives at `packages/web/eslint.config.js`.
-- Uses `@eslint/js`, `typescript-eslint`, `react-hooks`, and
-  `react-refresh` presets.
+- React components: `PascalCase` (e.g. `ItemList.tsx`).
+- Hooks: `useXxx` in hook modules.
+- Utility functions/variables: `camelCase`.
+- Constants and env-like values: `UPPER_SNAKE_CASE` (e.g. `SERVER_URL`).
+- Zod schemas: `XxxSchema`; derived input/output types should mirror schema intent.
 
-## TypeScript configuration highlights
+### React and UI Patterns
 
-- Web app uses `moduleResolution: "bundler"` and `jsx: "react-jsx"`.
-- Shared package emits declarations for reuse.
+- Functional components + hooks only (no class components observed).
+- Prefer controlled inputs for forms (`value` + `onChange`).
+- Use shared UI primitives from `@lumo/ui` before introducing custom duplicates.
+- Keep client/server boundaries explicit in Next.js (`"use client"` where required).
 
-## Cursor/Copilot rules
+### Error Handling
 
-- No `.cursor/rules`, `.cursorrules`, or
-  `.github/copilot-instructions.md` found in this repo.
+- In oRPC routers, throw typed contract errors (e.g. `errors.NOT_FOUND()`) instead of raw strings.
+- Validate IO with Zod schemas in `packages/api/src/schemas`.
+- In UI async flows, use `try/finally` for loading-state cleanup.
+- Surface user-facing errors from query/mutation state (`error?.message`) rather than swallowing.
+- Log operational server errors with context (`onError` interceptor pattern in server).
 
-## When adding or changing code
+### Data and API Conventions
 
-- Keep changes focused and minimal; avoid refactors during bug fixes.
-- Match surrounding patterns (imports, naming, structure).
-- Update or add scripts if new tooling is introduced.
-- Run `pnpm typecheck` after TypeScript changes when feasible.
+- Keep API route definitions, contract types, and handlers synchronized.
+- Reuse shared types from `@lumo/api` and `@lumo/db` rather than redefining shapes.
+- For DB mutations, ensure timestamp updates are handled consistently (`createdAt`/`updatedAt`).
 
-## If you must add tests later
+## Lint/Type/Test Expectations for PRs
 
-- Prefer co-locating tests near the code under test.
-- Choose a single test runner per package.
-- Document the runner and single-test command in this file.
+Before finalizing substantial changes, run:
+
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm exec vitest run` (or targeted commands above)
+
+If touching only one workspace, workspace-local commands are acceptable.
+
+## Cursor and Copilot Rules Check
+
+- `.cursorrules`: not found.
+- `.cursor/rules/`: not found.
+- `.github/copilot-instructions.md`: not found.
+
+If these files are added later, treat their instructions as higher-priority repository policy and update this file accordingly.

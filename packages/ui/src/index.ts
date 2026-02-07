@@ -1,4 +1,7 @@
 // UI Components
+export * from "./components/ai-elements/conversation"
+export * from "./components/ai-elements/message"
+export * from "./components/ai-elements/prompt-input"
 export * from "./components/ui/alert-dialog"
 export * from "./components/ui/badge"
 export * from "./components/ui/button"

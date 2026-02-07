@@ -10,6 +10,7 @@ import {
   DeleteItemOutputSchema,
 } from "../schemas/item"
 import { healthCheckOutputSchema } from "../schemas/health-check"
+import { ChatStreamInputSchema, ChatStreamOutputSchema } from "../schemas/chat"
 
 type NoInput = Schema<unknown, unknown>
 type DefaultMeta = Meta
@@ -53,6 +54,14 @@ export type ItemContract = {
       DefaultMeta
     >
   }
+  chat: {
+    stream: ContractProcedure<
+      typeof ChatStreamInputSchema,
+      typeof ChatStreamOutputSchema,
+      CommonErrorMap,
+      DefaultMeta
+    >
+  }
 }
 
 export const itemContract: ItemContract = {
@@ -81,6 +90,13 @@ export const itemContract: ItemContract = {
       .route({ method: "DELETE" })
       .input(DeleteItemInputSchema)
       .output(DeleteItemOutputSchema)
+      .errors(commonErrors),
+  },
+  chat: {
+    stream: oc
+      .route({ method: "POST" })
+      .input(ChatStreamInputSchema)
+      .output(ChatStreamOutputSchema)
       .errors(commonErrors),
   },
 }

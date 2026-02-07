@@ -1,62 +1,66 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
 
 interface TitlebarProps {
-  onManageWorkspace?: () => void
+  onManageWorkspace?: () => void;
 }
 
-export function Titlebar({ onManageWorkspace: _onManageWorkspace }: TitlebarProps) {
+export function Titlebar({
+  onManageWorkspace: _onManageWorkspace,
+}: TitlebarProps) {
   const [isTauri, setIsTauri] = useState(() => {
-    if (typeof window === "undefined") return false
-    return "__TAURI_INTERNALS__" in window || "__TAURI__" in window
-  })
-  const [isMaximized, setIsMaximized] = useState(false)
+    if (typeof window === "undefined") return false;
+    return "__TAURI_INTERNALS__" in window || "__TAURI__" in window;
+  });
+  const [isMaximized, setIsMaximized] = useState(false);
 
   const isMac = useMemo(() => {
-    if (typeof navigator === "undefined") return false
-    return /Mac OS X/.test(navigator.userAgent) || /Mac/.test(navigator.platform)
-  }, [])
+    if (typeof navigator === "undefined") return false;
+    return (
+      /Mac OS X/.test(navigator.userAgent) || /Mac/.test(navigator.platform)
+    );
+  }, []);
 
   useEffect(() => {
     const checkMaximized = async () => {
       try {
-        const { getCurrentWindow } = await import("@tauri-apps/api/window")
-        setIsTauri(true)
-        const maximized = await getCurrentWindow().isMaximized()
-        setIsMaximized(maximized)
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        setIsTauri(true);
+        const maximized = await getCurrentWindow().isMaximized();
+        setIsMaximized(maximized);
       } catch {
         // Not in Tauri environment
       }
-    }
+    };
 
-    checkMaximized()
+    checkMaximized();
 
     // Listen for window resize to update maximize state
-    const handleResize = () => checkMaximized()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    const handleResize = () => checkMaximized();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleMinimize = async () => {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window")
-    await getCurrentWindow().minimize()
-  }
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    await getCurrentWindow().minimize();
+  };
 
   const handleMaximize = async () => {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window")
-    await getCurrentWindow().toggleMaximize()
-    setIsMaximized(!isMaximized)
-  }
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    await getCurrentWindow().toggleMaximize();
+    setIsMaximized(!isMaximized);
+  };
 
   const handleClose = async () => {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window")
-    await getCurrentWindow().close()
-  }
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    await getCurrentWindow().close();
+  };
 
-  if (!isTauri) return null
+  if (!isTauri) return null;
 
   return (
     <div
-      className="h-10 bg-background flex items-center justify-between select-none"
+      className="h-10 border-b border-border bg-background flex items-center justify-between select-none"
       data-tauri-drag-region
     >
       <div className={isMac ? "w-[76px]" : "flex-1"} />
@@ -113,5 +117,5 @@ export function Titlebar({ onManageWorkspace: _onManageWorkspace }: TitlebarProp
         </div>
       )}
     </div>
-  )
+  );
 }

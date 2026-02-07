@@ -8,6 +8,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.0",
+    "ai": "^5.0.100",
     "@lumo/api": "workspace:*",
     "@lumo/db": "workspace:*",
     "@orpc/server": "catalog:",

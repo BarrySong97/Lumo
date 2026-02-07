@@ -41,6 +41,13 @@ export const itemRouter: ItemRouter = {
       return { success: true }
     }),
   },
+  chat: {
+    stream: i.chat.stream.handler(async function* ({ input, context, signal }) {
+      for await (const event of context.chat.stream(input, signal)) {
+        yield event
+      }
+    }),
+  },
 }
 
 export type ItemRouterClient = RouterClient<ItemRouter>

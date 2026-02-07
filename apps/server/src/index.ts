@@ -2,7 +2,9 @@ import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { onError } from "@orpc/server"
 import { RPCHandler } from "@orpc/server/fetch"
-import { createContext } from "@lumo/api/context"
+import { streamText } from "ai"
+import { createOpenAI } from "@ai-sdk/openai"
+import { createContext, type ChatService } from "@lumo/api/context"
 import { itemRouter } from "@lumo/api/routers/index"
 import { createDatabase } from "@lumo/db"
 import { join } from "path"
@@ -35,6 +37,58 @@ function getDbPath(): string {
 
 const dbPath = getDbPath()
 const db = createDatabase({ path: dbPath })
+
+function getChatModel(model?: string): "gpt-4o-mini" | "gpt-4o" {
+  if (model === "gpt-4o") {
+    return "gpt-4o"
+  }
+  return "gpt-4o-mini"
+}
+
+const chatService: ChatService = {
+  async *stream(input, signal) {
+    const apiKey = input.openAIApiKey || process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error("Missing OpenAI API key. Please set it in chat settings or OPENAI_API_KEY.")
+    }
+
+    const openai = createOpenAI({
+      apiKey,
+      baseURL: input.openAIBaseURL,
+    })
+
+    const result = streamText({
+      model: openai(getChatModel(input.model)),
+      system:
+        process.env.AI_SYSTEM_PROMPT ||
+        "You are a helpful assistant. Keep answers concise and practical.",
+      messages: input.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+      abortSignal: signal,
+    })
+
+    for await (const textPart of result.textStream) {
+      if (signal?.aborted) {
+        return
+      }
+
+      if (!textPart) {
+        continue
+      }
+
+      yield {
+        type: "delta" as const,
+        text: textPart,
+      }
+    }
+
+    yield {
+      type: "done" as const,
+    }
+  },
+}
 
 function getAllowedOrigins(): Set<string> {
   const configured = (process.env.CORS_ORIGIN || "")
@@ -83,7 +137,7 @@ app.get("/health", (c) => {
 app.all("/rpc*", async (c) => {
   const { response } = await rpcHandler.handle(c.req.raw, {
     prefix: "/rpc",
-    context: createContext({ db }),
+    context: createContext({ db, chat: chatService }),
   })
   return response ?? c.json({ error: "Not Found" }, 404)
 })
