@@ -1,4 +1,15 @@
-import { Button, Conversation, ConversationContent, cn } from "@lumo/ui";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+  MessageResponse,
+  cn,
+} from "@lumo/ui";
 import { Bot, Copy, RefreshCcw } from "lucide-react";
 
 import type { ChatMessage, ChatStatus } from "@/stores/chatStore";
@@ -22,17 +33,19 @@ export function MessageList({
 }: MessageListProps) {
   return (
     <Conversation className="flex-1 rounded-none border-0 bg-transparent">
-      <ConversationContent className="max-w-none gap-5 px-5 pb-4 pt-5">
+      <ConversationContent className="max-w-none gap-5 px-0 pb-4 pt-5">
         {messages.length === 0 ? (
-          <div className="flex min-h-[340px] flex-col items-center justify-center gap-3 text-center">
-            <div className="flex size-9 items-center justify-center rounded-full bg-primary/20 text-primary">
-              <Bot className="size-4" />
+          <ConversationEmptyState className="min-h-[340px]">
+            <div className="flex flex-col items-center justify-center gap-3 text-center">
+              <div className="flex size-9 items-center justify-center rounded-full bg-primary/20 text-primary">
+                <Bot className="size-4" />
+              </div>
+              <p className="text-lg font-medium">
+                Hello. I am ready to assist you with your tasks today.
+              </p>
+              <p className="text-muted-foreground text-sm">How can I help?</p>
             </div>
-            <p className="text-lg font-medium">
-              Hello. I am ready to assist you with your tasks today.
-            </p>
-            <p className="text-muted-foreground text-sm">How can I help?</p>
-          </div>
+          </ConversationEmptyState>
         ) : (
           <>
             <p className="text-muted-foreground mx-auto rounded-full border border-black/[0.06] bg-black/[0.03] px-3 py-1 text-xs dark:border-white/[0.08] dark:bg-white/[0.05]">
@@ -58,26 +71,21 @@ export function MessageList({
                     </div>
                   )}
 
-                  <div
-                    className={cn(
-                      "max-w-[86%]",
-                      isAssistant ? "space-y-2" : "space-y-1",
-                    )}
-                  >
-                    {isAssistant && (
-                      <p className="text-[15px] font-semibold">Assistant</p>
-                    )}
-
-                    <div
+                  <Message className="max-w-[86%]" from={message.role}>
+                    <MessageContent
                       className={cn(
-                        "whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-6",
-                        isAssistant
-                          ? "bg-transparent px-0 py-0"
-                          : "border border-black/[0.07] bg-black/[0.04] dark:border-white/[0.08] dark:bg-white/[0.09]",
+                        isAssistant ? "space-y-2" : "space-y-1",
+                        isAssistant ? "bg-transparent px-0 py-0" : "",
                       )}
                     >
-                      {message.content || (status === "streaming" ? "..." : "")}
-                    </div>
+                      {isAssistant && (
+                        <p className="text-[15px] font-semibold">Assistant</p>
+                      )}
+                      <MessageResponse className="text-[15px] leading-6">
+                        {message.content ||
+                          (status === "streaming" ? "..." : "")}
+                      </MessageResponse>
+                    </MessageContent>
 
                     {!isAssistant && index === messages.length - 1 && (
                       <p className="text-muted-foreground text-right text-xs">
@@ -86,20 +94,17 @@ export function MessageList({
                     )}
 
                     {isLastAssistant && (
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          className="text-muted-foreground"
+                      <MessageActions>
+                        <MessageAction
+                          label="Regenerate"
                           disabled={!canRegenerate}
                           onClick={() => void onRegenerate()}
-                          size="icon-xs"
-                          type="button"
-                          variant="ghost"
                         >
                           <RefreshCcw className="size-3.5" />
-                        </Button>
+                        </MessageAction>
 
-                        <Button
-                          className="text-muted-foreground"
+                        <MessageAction
+                          label="Copy"
                           disabled={!message.content}
                           onClick={() => {
                             if (!message.content) {
@@ -108,15 +113,12 @@ export function MessageList({
 
                             void navigator.clipboard.writeText(message.content);
                           }}
-                          size="icon-xs"
-                          type="button"
-                          variant="ghost"
                         >
                           <Copy className="size-3.5" />
-                        </Button>
-                      </div>
+                        </MessageAction>
+                      </MessageActions>
                     )}
-                  </div>
+                  </Message>
                 </div>
               );
             })}
@@ -129,6 +131,7 @@ export function MessageList({
           </p>
         )}
       </ConversationContent>
+      <ConversationScrollButton />
     </Conversation>
   );
 }

@@ -60,7 +60,7 @@ export function Titlebar({
 
   return (
     <div
-      className="h-10 border-b border-border bg-background flex items-center justify-between select-none"
+      className="h-8 flex shrink-0 items-center justify-between border-b border-border bg-background select-none"
       data-tauri-drag-region
     >
       <div className={isMac ? "w-[76px]" : "flex-1"} />

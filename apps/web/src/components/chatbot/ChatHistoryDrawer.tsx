@@ -32,7 +32,7 @@ export function ChatHistoryDrawer({
     >
       <DrawerContent
         className={cn(
-          "border-black/10 dark:border-white/10 fixed left-0 top-0 h-full border-r bg-card transition-transform duration-200 data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0",
+          "border-black/10 dark:border-white/10 bg-card data-[vaul-drawer-direction=left]:sm:max-w-none",
           drawerWidth,
         )}
       >

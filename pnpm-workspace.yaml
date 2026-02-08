@@ -7,32 +7,32 @@ catalog:
   react: "^19.2.0"
   react-dom: "^19.2.0"
   typescript: "~5.8.3"
-  
+
   # Type definitions
   "@types/react": "^19.1.8"
   "@types/react-dom": "^19.1.6"
   "@types/bun": "latest"
   "@types/node": "^24.10.1"
-  
+
   # oRPC stack
   "@orpc/server": "^1.13.4"
   "@orpc/client": "^1.13.4"
   "@orpc/contract": "^1.13.4"
   "@orpc/tanstack-query": "^1.13.4"
-  
+
   # Data fetching
   "@tanstack/react-query": "^5.90.12"
-  
+
   # Validation
   zod: "^3.22.0"
-  
+
   # Database
   drizzle-orm: "^0.45.1"
   drizzle-kit: "^0.31.0"
-  
+
   # Server
   hono: "^4.0.0"
-  
+
   # Styling
   tailwindcss: "^4.1.17"
   tailwind-merge: "^3.4.0"

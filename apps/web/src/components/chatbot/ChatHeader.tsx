@@ -13,11 +13,15 @@ export function ChatHeader({
   onOpenSettings,
 }: ChatHeaderProps) {
   return (
-    <header className="relative flex h-14 items-center justify-between border-b border-black/[0.08] px-5 dark:border-white/[0.08]">
+    <header
+      className="relative flex h-14 items-center justify-between border-b border-black/[0.08] px-5 dark:border-white/[0.08]"
+      data-tauri-drag-region
+    >
       <div className="flex items-center gap-1.5">
         <Button
           aria-label="Open history"
           className="text-muted-foreground"
+          data-tauri-no-drag-region
           onClick={onOpenHistory}
           size="icon-sm"
           type="button"
@@ -29,6 +33,7 @@ export function ChatHeader({
         <Button
           aria-label="New chat"
           className="text-muted-foreground"
+          data-tauri-no-drag-region
           onClick={onNewChat}
           size="icon-sm"
           type="button"
@@ -45,6 +50,7 @@ export function ChatHeader({
       <Button
         aria-label="Open settings"
         className="text-muted-foreground"
+        data-tauri-no-drag-region
         onClick={onOpenSettings}
         size="icon-sm"
         type="button"

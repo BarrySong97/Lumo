@@ -1,8 +1,10 @@
 import {
-  Button,
   PromptInput,
+  PromptInputButton,
+  PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
+  PromptInputTools,
 } from "@lumo/ui";
 import { Image, Mic, Paperclip, Sparkles } from "lucide-react";
 
@@ -25,42 +27,55 @@ export function ChatInput({
   onSubmit,
   onStop,
 }: ChatInputProps) {
+  const canStop = status === "submitted" || status === "streaming";
+  const submitDisabled = !canSend && !canStop;
+
   return (
     <PromptInput
       className="w-full"
-      onSubmit={(event) => {
+      onSubmit={(message, event) => {
         event.preventDefault();
+        if (!message.text.trim() || !canSend) {
+          return;
+        }
         onSubmit();
       }}
     >
       <PromptInputTextarea
-        className="min-h-[96px] rounded-2xl border-black/10 bg-black/[0.03] px-4 py-3 pr-14 text-base leading-6 placeholder:text-black/35 dark:border-white/10 dark:bg-white/[0.06] dark:placeholder:text-white/35"
+        className="min-h-[96px] px-4 py-3 text-base leading-6 placeholder:text-black/35 dark:placeholder:text-white/35"
         onChange={(event) => onInputChange(event.currentTarget.value)}
         placeholder="Ask anything..."
         value={input}
       />
 
-      <div className="text-muted-foreground absolute bottom-3 left-2.5 flex items-center gap-0.5">
-        <Button className="rounded-md" size="icon-xs" type="button" variant="ghost">
-          <Paperclip className="size-3.5" />
-        </Button>
-        <Button className="rounded-md" size="icon-xs" type="button" variant="ghost">
-          <Sparkles className="size-3.5" />
-        </Button>
-        <Button className="rounded-md" size="icon-xs" type="button" variant="ghost">
-          <Image className="size-3.5" />
-        </Button>
-        <Button className="rounded-md" size="icon-xs" type="button" variant="ghost">
-          <Mic className="size-3.5" />
-        </Button>
-      </div>
+      <PromptInputFooter>
+        <PromptInputTools className="text-muted-foreground">
+          <PromptInputButton className="rounded-md">
+            <Paperclip className="size-3.5" />
+          </PromptInputButton>
+          <PromptInputButton className="rounded-md">
+            <Sparkles className="size-3.5" />
+          </PromptInputButton>
+          <PromptInputButton className="rounded-md">
+            <Image className="size-3.5" />
+          </PromptInputButton>
+          <PromptInputButton className="rounded-md">
+            <Mic className="size-3.5" />
+          </PromptInputButton>
+        </PromptInputTools>
 
-      <PromptInputSubmit
-        className="absolute bottom-3 right-3 rounded-xl"
-        disabled={!canSend}
-        onStop={onStop}
-        status={status}
-      />
+        <PromptInputSubmit
+          disabled={submitDisabled}
+          onClick={(event) => {
+            if (!canStop) {
+              return;
+            }
+            event.preventDefault();
+            onStop();
+          }}
+          status={status}
+        />
+      </PromptInputFooter>
     </PromptInput>
   );
 }
